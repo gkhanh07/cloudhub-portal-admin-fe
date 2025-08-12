@@ -1,97 +1,122 @@
-'use client'
-import React, { useState } from 'react';
+'use client';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
 import {
-    AppstoreOutlined,
     CalendarOutlined,
     LinkOutlined,
-    MailOutlined,
     SettingOutlined,
+    EditOutlined,
+    HomeOutlined,
+    TagsOutlined,
+    ShoppingOutlined,
+    LogoutOutlined,
+    UserOutlined,
 } from '@ant-design/icons';
-import { Divider, Menu, Switch } from 'antd';
-import type { GetProp, MenuProps } from 'antd';
+import { Menu, Modal, Avatar, Typography, Divider } from 'antd';
+import { useRouter, usePathname } from 'next/navigation';
+import { authService } from '../service/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
-type MenuTheme = GetProp<MenuProps, 'theme'>;
+const { Text } = Typography;
 
-type MenuItem = GetProp<MenuProps, 'items'>[number];
-
-const items: MenuItem[] = [
-    {
-        key: '1',
-        icon: <MailOutlined />,
-        label: 'Navigation One',
-    },
-    {
-        key: '2',
-        icon: <CalendarOutlined />,
-        label: 'Navigation Two',
-    },
-    {
-        key: 'sub1',
-        label: 'Navigation Two',
-        icon: <AppstoreOutlined />,
-        children: [
-            { key: '3', label: 'Option 3' },
-            { key: '4', label: 'Option 4' },
-            {
-                key: 'sub1-2',
-                label: 'Submenu',
-                children: [
-                    { key: '5', label: 'Option 5' },
-                    { key: '6', label: 'Option 6' },
-                ],
-            },
-        ],
-    },
-    {
-        key: 'sub2',
-        label: 'Navigation Three',
-        icon: <SettingOutlined />,
-        children: [
-            { key: '7', label: 'Option 7' },
-            { key: '8', label: 'Option 8' },
-            { key: '9', label: 'Option 9' },
-            { key: '10', label: 'Option 10' },
-        ],
-    },
-    {
-        key: 'link',
-        icon: <LinkOutlined />,
-        label: (
-            <a href="https://ant.design" target="_blank" rel="noopener noreferrer">
-                Ant Design
-            </a>
-        ),
-    },
+const items = [
+    { key: 'posts', icon: <EditOutlined />, label: 'Posts' },
+    { key: 'products', icon: <ShoppingOutlined />, label: 'Products' },
+    { key: 'categories', icon: <TagsOutlined />, label: 'Categories' },
+    { key: 'news', icon: <CalendarOutlined />, label: 'News' },
+    { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất' },
 ];
 
+const pathToKeyMap: Record<string, string> = {
+    '/': 'home',
+    '/posts': 'posts',
+    '/products': 'products',
+    '/categories': 'categories',
+    '/news': 'news',
+};
+
 const MenuComponent: React.FC = () => {
-    const [mode, setMode] = useState<'vertical' | 'inline'>('inline');
-    const [theme, setTheme] = useState<MenuTheme>('light');
+    const router = useRouter();
+    const pathname = usePathname();
 
-    const changeMode = (value: boolean) => {
-        setMode(value ? 'vertical' : 'inline');
-    };
+    const initialKey = (() => {
+        const map: Record<string, string> = {
+            '/': 'home',
+            '/posts': 'posts',
+            '/products': 'products',
+            '/categories': 'categories',
+            '/news': 'news',
+        };
+        return map[pathname] || 'home';
+    })();
 
-    const changeTheme = (value: boolean) => {
-        setTheme(value ? 'dark' : 'light');
+    const [selectedKeys, setSelectedKeys] = useState<string[]>([initialKey]);
+    const { user } = useAuth();
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+
+
+    useLayoutEffect(() => {
+        setSelectedKeys([pathToKeyMap[pathname] || 'home']);
+    }, [pathname]);
+
+    const handleMenuClick = ({ key }: { key: string }) => {
+        if (key === 'logout') {
+            Modal.confirm({
+                title: 'Xác nhận đăng xuất',
+                content: 'Bạn có chắc chắn muốn đăng xuất?',
+                okText: 'Đăng xuất',
+                cancelText: 'Hủy',
+                onOk: () => {
+                    authService.logout();
+                    router.push('/login');
+                },
+            });
+            return;
+        }
+
+        if (pathToKeyMap && Object.values(pathToKeyMap).includes(key)) {
+            const targetPath = Object.keys(pathToKeyMap).find(
+                (path) => pathToKeyMap[path] === key
+            );
+            if (targetPath) router.push(targetPath);
+        }
     };
 
     return (
-        <>
-            <Switch onChange={changeMode} /> Change Mode
-            < Divider type="vertical" />
-            <Switch onChange={changeTheme} /> Change Style
-            < br />
-            <br />
+        <div style={{ width: 256, padding: 16 }}>
+            {/* Header user */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                }}
+            >
+                <Avatar
+                    size={48}
+                    src={avatarUrl || undefined}
+                    icon={!avatarUrl ? <UserOutlined /> : undefined}
+                    style={{ marginRight: 12 }}
+                />
+                <div>
+                    <Text strong style={{ fontSize: 16 }}>
+                        {user?.name || 'User'}
+                    </Text>
+                    {/* Nếu muốn, thêm email hoặc vai trò */}
+                    <div style={{ fontSize: 12, color: '#888' }}>{user?.email}</div>
+                </div>
+            </div>
+            <Divider style={{ margin: '8px 0' }} />
+
             <Menu
-                style={{ width: 256 }}
-                defaultSelectedKeys={['1']}
-                defaultOpenKeys={['sub1']}
-                mode={mode}
-                theme={theme}
+                selectedKeys={selectedKeys}
+                mode="inline"
+                theme="light"
                 items={items}
+                onClick={handleMenuClick}
+                style={{ borderRight: 'none' }}
             />
-        </ >
+        </div>
     );
 };
 

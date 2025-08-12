@@ -1,6 +1,7 @@
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import '@/app/globals.css'
-import MenuComponent from '@/components/MenuComponent';
+import ConditionalLayout from '@/components/ConditionalLayout';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata = {
   title: 'Admin',
@@ -15,16 +16,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AntdRegistry>
-          <div className="layout-container">
-            <aside className="sidebar">
-              <MenuComponent />
-            </aside>
-            <main className="content">
+        <AuthProvider>
+          <AntdRegistry>
+            <ConditionalLayout>
               {children}
-            </main>
-          </div>
-        </AntdRegistry>
+            </ConditionalLayout>
+          </AntdRegistry>
+        </AuthProvider>
       </body>
     </html>
   )
