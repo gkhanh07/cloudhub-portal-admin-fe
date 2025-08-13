@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { productService } from '../../service/products';
-import { Product, CreateProductRequest, UpdateProductRequest } from '../../../interface/product';
+import { Product } from '../../../interface/product';
 import { categoryService, Category as CategoryType } from '../../service/categories';
 import { Category } from '../../../interface/categories';
 
@@ -31,13 +31,11 @@ const ProductsPage = () => {
     const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
 
-    // Load data on mount
     useEffect(() => {
         loadProducts();
         loadCategories();
     }, []);
 
-    // Filter products when search changes
     useEffect(() => {
         const filtered = products.filter(product =>
             product.name.toLowerCase().includes(searchText.toLowerCase())
@@ -45,14 +43,13 @@ const ProductsPage = () => {
         setFilteredProducts(filtered);
     }, [products, searchText]);
 
-    // API Functions
     const loadProducts = async () => {
         setLoading(true);
         try {
             const response = await productService.getAllProducts();
             setProducts(response.data);
-        } catch (error) {
-            message.error('Failed to load products');
+        } catch {
+            message.error('Không thể tải danh sách sản phẩm');
         } finally {
             setLoading(false);
         }
@@ -62,8 +59,8 @@ const ProductsPage = () => {
         try {
             const response = await categoryService.getAllCategories();
             setCategories(response.data);
-        } catch (error) {
-            message.error('Failed to load categories');
+        } catch {
+            message.error('Không thể tải danh sách danh mục');
         }
     };
 
@@ -83,9 +80,9 @@ const ProductsPage = () => {
         try {
             await productService.deleteProduct(id);
             setProducts(products.filter(p => p._id !== id));
-            message.success('Product deleted successfully');
-        } catch (error) {
-            message.error('Failed to delete product');
+            message.success('Xóa sản phẩm thành công');
+        } catch {
+            message.error('Xóa sản phẩm thất bại');
         }
     };
 
@@ -94,16 +91,16 @@ const ProductsPage = () => {
             if (editingProduct) {
                 const response = await productService.updateProduct(editingProduct._id, values);
                 setProducts(products.map(p => p._id === editingProduct._id ? response.data : p));
-                message.success('Product updated successfully');
+                message.success('Cập nhật sản phẩm thành công');
             } else {
                 const response = await productService.createProduct(values);
                 setProducts([...products, response.data]);
-                message.success('Product created successfully');
+                message.success('Thêm sản phẩm thành công');
             }
             setModalVisible(false);
             form.resetFields();
-        } catch (error) {
-            message.error('Failed to save product');
+        } catch {
+            message.error('Lưu sản phẩm thất bại');
         }
     };
 
@@ -113,68 +110,38 @@ const ProductsPage = () => {
             dataIndex: '_id',
             key: '_id',
             width: 80,
-            render: (id: string) => id.slice(-6), // Show last 6 characters
+            render: (id: string) => id.slice(-6),
         },
         {
-            title: 'Name',
+            title: 'Tên sản phẩm',
             dataIndex: 'name',
             key: 'name',
             sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
         },
+        { title: 'CPU', dataIndex: 'cpu', key: 'cpu' },
+        { title: 'GPU (GB)', dataIndex: 'gpu', key: 'gpu' },
+        { title: 'Memory (GB)', dataIndex: 'memory_gb', key: 'memory_gb', width: 120 },
+        { title: 'Disk SSD (GB)', dataIndex: 'disk_ssd_gb', key: 'disk_ssd_gb', width: 130 },
+        { title: 'IP', dataIndex: 'ip', key: 'ip', width: 120 },
+        { title: 'Hệ điều hành', dataIndex: 'os', key: 'os' },
+        { title: 'Băng thông', dataIndex: 'bandwidth', key: 'bandwidth' },
         {
-            title: 'CPU',
-            dataIndex: 'cpu',
-            key: 'cpu',
-        },
-        {
-            title: 'GPU',
-            dataIndex: 'gpu',
-            key: 'gpu',
-        },
-        {
-            title: 'Memory (GB)',
-            dataIndex: 'memory_gb',
-            key: 'memory_gb',
-            width: 120,
-        },
-        {
-            title: 'Disk SSD (GB)',
-            dataIndex: 'disk_ssd_gb',
-            key: 'disk_ssd_gb',
-            width: 130,
-        },
-        {
-            title: 'IP',
-            dataIndex: 'ip',
-            key: 'ip',
-        },
-        {
-            title: 'OS',
-            dataIndex: 'os',
-            key: 'os',
-        },
-        {
-            title: 'Bandwidth',
-            dataIndex: 'bandwidth',
-            key: 'bandwidth',
-        },
-        {
-            title: 'Price/Month',
+            title: 'Giá / Tháng',
             dataIndex: 'price_per_month',
             key: 'price_per_month',
-            render: (price: number) => `$${price.toFixed(2)}`,
+            render: (price: number) => `${price.toLocaleString()}₫`,
             sorter: (a: Product, b: Product) => a.price_per_month - b.price_per_month,
             width: 120,
         },
         {
-            title: 'Category',
+            title: 'Danh mục',
             dataIndex: 'category',
             key: 'category',
             render: (category: Category | string) =>
                 typeof category === 'object' ? category.name : category,
         },
         {
-            title: 'Actions',
+            title: 'Hành động',
             key: 'actions',
             width: 120,
             render: (_: any, record: Product) => (
@@ -186,17 +153,12 @@ const ProductsPage = () => {
                         onClick={() => handleEdit(record)}
                     />
                     <Popconfirm
-                        title="Are you sure you want to delete this product?"
+                        title="Bạn có chắc muốn xóa sản phẩm này?"
                         onConfirm={() => handleDelete(record._id)}
-                        okText="Yes"
-                        cancelText="No"
+                        okText="Có"
+                        cancelText="Không"
                     >
-                        <Button
-                            type="primary"
-                            danger
-                            icon={<DeleteOutlined />}
-                            size="small"
-                        />
+                        <Button type="primary" danger icon={<DeleteOutlined />} size="small" />
                     </Popconfirm>
                 </Space>
             ),
@@ -208,7 +170,7 @@ const ProductsPage = () => {
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
                 <Col span={12}>
                     <Input.Search
-                        placeholder="Search products by name"
+                        placeholder="Tìm kiếm sản phẩm theo tên"
                         allowClear
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
@@ -217,7 +179,7 @@ const ProductsPage = () => {
                 </Col>
                 <Col span={12} style={{ textAlign: 'right' }}>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                        Add Product
+                        Thêm sản phẩm
                     </Button>
                 </Col>
             </Row>
@@ -231,141 +193,101 @@ const ProductsPage = () => {
                     pageSize: 10,
                     showSizeChanger: true,
                     showQuickJumper: true,
-                    showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} of ${total} items`,
+                    showTotal: (total, range) => `${range[0]}-${range[1]} trong ${total} sản phẩm`,
                 }}
                 scroll={{ x: 1400 }}
             />
 
             <Modal
-                title={editingProduct ? 'Edit Product' : 'Add Product'}
+                title={editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm'}
                 open={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 footer={null}
                 width={800}
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    style={{ marginTop: 16 }}
-                >
+                <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Form.Item label="Tên sản phẩm" name="name">
+                                <Input placeholder="VD: GOLD NVME 1-1-20 (Xeon 6148 2.4ghz)" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item
-                                label="Name"
-                                name="name"
-                                rules={[{ required: true, message: 'Please input product name!' }]}
-                            >
+                            <Form.Item label="CPU" name="cpu">
+                                <Input placeholder="VD: Xeon 6148 2.4ghz" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="GPU (GB)" name="gpu">
+                                <InputNumber min={0} style={{ width: '100%' }} placeholder="8" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Memory (GB)" name="memory_gb">
+                                <InputNumber min={1} style={{ width: '100%' }} placeholder="1" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="Disk SSD (GB)" name="disk_ssd_gb">
+                                <InputNumber min={1} style={{ width: '100%' }} placeholder="20" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="IP" name="ip">
                                 <Input />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item
-                                label="CPU"
-                                name="cpu"
-                                rules={[{ required: true, message: 'Please input CPU!' }]}
-                            >
-                                <Input />
+                            <Form.Item label="Hệ điều hành" name="os">
+                                <Select placeholder="Chọn hệ điều hành">
+                                    <Select.Option value="Windows">Windows</Select.Option>
+                                    <Select.Option value="Linux">Linux</Select.Option>
+                                    <Select.Option value="Windows/Linux">Windows/Linux</Select.Option>
+                                </Select>
                             </Form.Item>
                         </Col>
                     </Row>
 
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item
-                                label="GPU"
-                                name="gpu"
-                                rules={[{ required: true, message: 'Please input GPU!' }]}
-                            >
-                                <Input />
+                            <Form.Item label="Băng thông" name="bandwidth">
+                                <Select placeholder="Chọn băng thông">
+                                    <Select.Option value="Không giới hạn">Không giới hạn</Select.Option>
+                                    <Select.Option value="100 Mbps">100 Mbps</Select.Option>
+                                    <Select.Option value="1 Gbps">1 Gbps</Select.Option>
+                                    <Select.Option value="10 Gbps">10 Gbps</Select.Option>
+                                </Select>
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item
-                                label="Memory (GB)"
-                                name="memory_gb"
-                                rules={[
-                                    { required: true, message: 'Please input memory!' },
-                                    { type: 'number', min: 1, message: 'Memory must be greater than 0!' }
-                                ]}
-                            >
-                                <InputNumber min={1} style={{ width: '100%' }} />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Disk SSD (GB)"
-                                name="disk_ssd_gb"
-                                rules={[
-                                    { required: true, message: 'Please input disk size!' },
-                                    { type: 'number', min: 1, message: 'Disk size must be greater than 0!' }
-                                ]}
-                            >
-                                <InputNumber min={1} style={{ width: '100%' }} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                label="IP Address"
-                                name="ip"
-                                rules={[{ required: true, message: 'Please input IP address!' }]}
-                            >
-                                <Input placeholder="192.168.1.1" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Operating System"
-                                name="os"
-                                rules={[{ required: true, message: 'Please input OS!' }]}
-                            >
-                                <Input placeholder="Ubuntu 22.04, Windows Server 2022" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Bandwidth"
-                                name="bandwidth"
-                                rules={[{ required: true, message: 'Please input bandwidth!' }]}
-                            >
-                                <Input placeholder="1 Gbps, 100 Mbps" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Price per Month"
-                                name="price_per_month"
-                                rules={[
-                                    { required: true, message: 'Please input price!' },
-                                    { type: 'number', min: 0.01, message: 'Price must be greater than 0!' }
-                                ]}
-                            >
+                            <Form.Item label="Giá / Tháng (VNĐ)" name="price_per_month">
                                 <InputNumber
-                                    min={0.01}
-                                    step={0.01}
-                                    precision={2}
+                                    min={0}
+                                    step={1000}
                                     style={{ width: '100%' }}
-                                    addonBefore="$"
+                                    placeholder="50000"
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={(value: string | undefined): number => {
+                                        return Number(value?.replace(/\$\s?|(,*)/g, '') || 0);
+                                    }}
                                 />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Category"
-                                name="category"
-                                rules={[{ required: true, message: 'Please select category!' }]}
-                            >
-                                <Select placeholder="Select category">
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Form.Item label="Danh mục" name="category">
+                                <Select placeholder="Chọn danh mục">
                                     {categories.map(category => (
                                         <Select.Option key={category._id} value={category._id}>
                                             {category.name}
@@ -378,11 +300,9 @@ const ProductsPage = () => {
 
                     <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
                         <Space>
-                            <Button onClick={() => setModalVisible(false)}>
-                                Cancel
-                            </Button>
+                            <Button onClick={() => setModalVisible(false)}>Hủy</Button>
                             <Button type="primary" htmlType="submit">
-                                {editingProduct ? 'Update' : 'Create'}
+                                {editingProduct ? 'Cập nhật' : 'Thêm mới'}
                             </Button>
                         </Space>
                     </Form.Item>

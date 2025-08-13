@@ -12,19 +12,17 @@ const CategoriesPage: React.FC = () => {
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [form] = Form.useForm();
 
-    // Load categories on mount
     useEffect(() => {
         loadCategories();
     }, []);
 
-    // API Functions
     const loadCategories = async () => {
         setLoading(true);
         try {
             const response = await categoryService.getAllCategories();
             setCategories(response.data);
         } catch (error) {
-            message.error('Failed to load categories');
+            message.error('Không thể tải danh mục');
         } finally {
             setLoading(false);
         }
@@ -57,16 +55,16 @@ const CategoriesPage: React.FC = () => {
                 setCategories(categories.map(cat =>
                     cat._id === editingCategory._id ? response.data : cat
                 ));
-                message.success('Category updated successfully!');
+                message.success('Cập nhật danh mục thành công!');
             } else {
                 const response = await categoryService.createCategory(values);
                 setCategories([...categories, response.data]);
-                message.success('Category created successfully!');
+                message.success('Thêm danh mục thành công!');
             }
 
             handleCancel();
         } catch (error) {
-            message.error('Failed to save category');
+            message.error('Lưu danh mục thất bại');
         }
     };
 
@@ -74,9 +72,9 @@ const CategoriesPage: React.FC = () => {
         try {
             await categoryService.deleteCategory(id);
             setCategories(categories.filter(cat => cat._id !== id));
-            message.success('Category deleted successfully!');
+            message.success('Xóa danh mục thành công!');
         } catch (error) {
-            message.error('Failed to delete category');
+            message.error('Xóa danh mục thất bại');
         }
     };
 
@@ -86,20 +84,20 @@ const CategoriesPage: React.FC = () => {
             dataIndex: '_id',
             key: '_id',
             width: 100,
-            render: (id: string) => id.slice(-6), // Show last 6 characters
+            render: (id: string) => id.slice(-6),
         },
         {
-            title: 'Name',
+            title: 'Tên danh mục',
             dataIndex: 'name',
             key: 'name',
         },
         {
-            title: 'Description',
+            title: 'Mô tả',
             dataIndex: 'description',
             key: 'description',
         },
         {
-            title: 'Actions',
+            title: 'Hành động',
             key: 'actions',
             width: 150,
             render: (_: any, record: Category) => (
@@ -110,21 +108,21 @@ const CategoriesPage: React.FC = () => {
                         icon={<EditOutlined />}
                         onClick={() => showEditModal(record)}
                     >
-                        Edit
+                        Sửa
                     </Button>
                     <Popconfirm
-                        title="Confirm Delete"
-                        description="Are you sure you want to delete this category?"
+                        title="Xác nhận xóa"
+                        description="Bạn có chắc muốn xóa danh mục này?"
                         onConfirm={() => handleDelete(record._id)}
-                        okText="Delete"
-                        cancelText="Cancel"
+                        okText="Xóa"
+                        cancelText="Hủy"
                     >
                         <Button
                             danger
                             size="small"
                             icon={<DeleteOutlined />}
                         >
-                            Delete
+                            Xóa
                         </Button>
                     </Popconfirm>
                 </Space>
@@ -135,14 +133,14 @@ const CategoriesPage: React.FC = () => {
     return (
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 16 }}>
-                <h1>Categories Management</h1>
+                <h1>Quản lý danh mục</h1>
                 <Button
                     type="primary"
                     icon={<PlusOutlined />}
                     onClick={showAddModal}
                     style={{ marginTop: 16 }}
                 >
-                    Add Category
+                    Thêm danh mục
                 </Button>
             </div>
 
@@ -155,17 +153,17 @@ const CategoriesPage: React.FC = () => {
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} of ${total} items`,
+                        `${range[0]}-${range[1]} của ${total} mục`,
                 }}
             />
 
             <Modal
-                title={editingCategory ? 'Edit Category' : 'Add New Category'}
+                title={editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
                 open={isModalVisible}
                 onOk={handleSubmit}
                 onCancel={handleCancel}
-                okText={editingCategory ? 'Update' : 'Create'}
-                cancelText="Cancel"
+                okText={editingCategory ? 'Cập nhật' : 'Tạo mới'}
+                cancelText="Hủy"
             >
                 <Form
                     form={form}
@@ -173,23 +171,23 @@ const CategoriesPage: React.FC = () => {
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        label="Category Name"
+                        label="Tên danh mục"
                         name="name"
                         rules={[
-                            { required: true, message: 'Please input category name!' },
-                            { min: 2, message: 'Category name must be at least 2 characters!' }
+                            { required: true, message: 'Vui lòng nhập tên danh mục!' },
+                            { min: 2, message: 'Tên danh mục phải có ít nhất 2 ký tự!' }
                         ]}
                     >
-                        <Input placeholder="Enter category name" />
+                        <Input placeholder="Nhập tên danh mục" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Description"
+                        label="Mô tả"
                         name="description"
                     >
                         <Input.TextArea
                             rows={3}
-                            placeholder="Enter category description (optional)"
+                            placeholder="Nhập mô tả danh mục (không bắt buộc)"
                         />
                     </Form.Item>
                 </Form>

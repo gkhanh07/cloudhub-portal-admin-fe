@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 
-// Định nghĩa interface cho user data từ JWT
+
 interface UserData {
     id: string;
     email: string;
@@ -14,17 +14,15 @@ interface UserData {
     iat?: number;
 }
 
-// Định nghĩa interface cho AuthContext
 interface AuthContextType {
     user: UserData | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (token: string) => void;
+    login: (accessToken: string, refreshToken?: string) => void;
     logout: () => void;
     refreshUserData: () => void;
 }
 
-// Tạo AuthContext
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider component
@@ -36,14 +34,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Decode token và lấy thông tin user
     const decodeTokenAndSetUser = (token: string) => {
         try {
             const decoded = jwtDecode<UserData>(token);
-
-            // Kiểm tra token có hết hạn không
             if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-                // Token đã hết hạn
                 Cookies.remove('access_token');
                 setUser(null);
                 return false;
@@ -59,7 +53,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
-    // Khởi tạo user data từ cookie khi component mount
     useEffect(() => {
         const token = Cookies.get('access_token');
 
@@ -71,18 +64,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, []);
 
     // Hàm login - lưu token vào cookie và decode
-    const login = (token: string) => {
-        Cookies.set('access_token', token, {
+    const login = (accessToken: string, refreshToken?: string) => {
+        Cookies.set('access_token', accessToken, {
             expires: 7, // 7 ngày
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
         });
-        decodeTokenAndSetUser(token);
+
+        // Lưu refresh token nếu có
+        if (refreshToken) {
+            Cookies.set('refresh_token', refreshToken, {
+                expires: 30, // 30 ngày cho refresh token
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+        }
+
+        decodeTokenAndSetUser(accessToken);
     };
 
     // Hàm logout - xóa token và reset user
     const logout = () => {
         Cookies.remove('access_token');
+        Cookies.remove('refresh_token');
         setUser(null);
     };
 

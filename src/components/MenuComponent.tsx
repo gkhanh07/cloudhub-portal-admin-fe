@@ -1,9 +1,7 @@
 'use client';
-import React, { useLayoutEffect, useState, useEffect } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import {
     CalendarOutlined,
-    LinkOutlined,
-    SettingOutlined,
     EditOutlined,
     HomeOutlined,
     TagsOutlined,
@@ -18,49 +16,44 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const { Text } = Typography;
 
-const items = [
-    { key: 'posts', icon: <EditOutlined />, label: 'Posts' },
-    { key: 'products', icon: <ShoppingOutlined />, label: 'Products' },
-    { key: 'categories', icon: <TagsOutlined />, label: 'Categories' },
-    { key: 'news', icon: <CalendarOutlined />, label: 'News' },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất' },
+// Danh sách menu
+const mucMenu = [
+    { key: 'trang-chu', icon: <HomeOutlined />, label: 'Trang chủ' },
+    { key: 'bai-viet', icon: <EditOutlined />, label: 'Bài viết' },
+    { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
+    { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục' },
+    { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức' },
+    { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' },
 ];
 
-const pathToKeyMap: Record<string, string> = {
-    '/': 'home',
-    '/posts': 'posts',
-    '/products': 'products',
-    '/categories': 'categories',
-    '/news': 'news',
+// Map đường dẫn → key menu
+const duongDanToKey: Record<string, string> = {
+    '/': 'trang-chu',
+    '/posts': 'bai-viet',
+    '/products': 'san-pham',
+    '/categories': 'danh-muc',
+    '/news': 'tin-tuc',
 };
 
-const MenuComponent: React.FC = () => {
+const ThanhMenu: React.FC = () => {
     const router = useRouter();
-    const pathname = usePathname();
+    const duongDanHienTai = usePathname();
 
-    const initialKey = (() => {
-        const map: Record<string, string> = {
-            '/': 'home',
-            '/posts': 'posts',
-            '/products': 'products',
-            '/categories': 'categories',
-            '/news': 'news',
-        };
-        return map[pathname] || 'home';
-    })();
+    // Key menu ban đầu dựa trên đường dẫn hiện tại
+    const keyBanDau = duongDanToKey[duongDanHienTai] || 'trang-chu';
+    const [keyDangChon, setKeyDangChon] = useState<string[]>([keyBanDau]);
 
-    const [selectedKeys, setSelectedKeys] = useState<string[]>([initialKey]);
     const { user } = useAuth();
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [anhDaiDien, setAnhDaiDien] = useState<string | null>(null);
 
-
-
+    // Cập nhật menu khi đường dẫn thay đổi
     useLayoutEffect(() => {
-        setSelectedKeys([pathToKeyMap[pathname] || 'home']);
-    }, [pathname]);
+        setKeyDangChon([duongDanToKey[duongDanHienTai] || 'trang-chu']);
+    }, [duongDanHienTai]);
 
-    const handleMenuClick = ({ key }: { key: string }) => {
-        if (key === 'logout') {
+    // Xử lý khi click menu
+    const xuLyClickMenu = ({ key }: { key: string }) => {
+        if (key === 'dang-xuat') {
             Modal.confirm({
                 title: 'Xác nhận đăng xuất',
                 content: 'Bạn có chắc chắn muốn đăng xuất?',
@@ -74,17 +67,17 @@ const MenuComponent: React.FC = () => {
             return;
         }
 
-        if (pathToKeyMap && Object.values(pathToKeyMap).includes(key)) {
-            const targetPath = Object.keys(pathToKeyMap).find(
-                (path) => pathToKeyMap[path] === key
+        if (Object.values(duongDanToKey).includes(key)) {
+            const duongDanMoi = Object.keys(duongDanToKey).find(
+                (path) => duongDanToKey[path] === key
             );
-            if (targetPath) router.push(targetPath);
+            if (duongDanMoi) router.push(duongDanMoi);
         }
     };
 
     return (
         <div style={{ width: 256, padding: 16 }}>
-            {/* Header user */}
+            {/* Header người dùng */}
             <div
                 style={{
                     display: 'flex',
@@ -94,30 +87,29 @@ const MenuComponent: React.FC = () => {
             >
                 <Avatar
                     size={48}
-                    src={avatarUrl || undefined}
-                    icon={!avatarUrl ? <UserOutlined /> : undefined}
+                    src={anhDaiDien || undefined}
+                    icon={!anhDaiDien ? <UserOutlined /> : undefined}
                     style={{ marginRight: 12 }}
                 />
                 <div>
                     <Text strong style={{ fontSize: 16 }}>
-                        {user?.name || 'User'}
+                        {user?.name || 'Người dùng'}
                     </Text>
-                    {/* Nếu muốn, thêm email hoặc vai trò */}
                     <div style={{ fontSize: 12, color: '#888' }}>{user?.email}</div>
                 </div>
             </div>
             <Divider style={{ margin: '8px 0' }} />
 
             <Menu
-                selectedKeys={selectedKeys}
+                selectedKeys={keyDangChon}
                 mode="inline"
                 theme="light"
-                items={items}
-                onClick={handleMenuClick}
+                items={mucMenu}
+                onClick={xuLyClickMenu}
                 style={{ borderRight: 'none' }}
             />
         </div>
     );
 };
 
-export default MenuComponent;
+export default ThanhMenu;

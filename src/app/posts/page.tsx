@@ -8,106 +8,100 @@ import { useAuth } from '@/contexts/AuthContext';
 const { Title } = Typography;
 const { TextArea } = Input;
 
-const formRules = {
+// Quy tắc validate
+const quyTacForm = {
     name: [
-        { required: true, message: 'Please input the post name!' },
-        { min: 3, message: 'Name must be at least 3 characters!' },
-        { max: 100, message: 'Name must not exceed 100 characters!' }
+        { required: true, message: 'Vui lòng nhập tiêu đề bài viết!' },
+        { min: 3, message: 'Tiêu đề phải có ít nhất 3 ký tự!' },
+        { max: 100, message: 'Tiêu đề không được vượt quá 100 ký tự!' }
     ],
     content: [
-        { required: true, message: 'Please input the content!' },
-        { min: 10, message: 'Content must be at least 10 characters!' }
+        { required: true, message: 'Vui lòng nhập nội dung!' },
+        { min: 10, message: 'Nội dung phải có ít nhất 10 ký tự!' }
     ],
-    price: [
-        { required: true, message: 'Please input the price!' },
-        { min: 0, message: 'Price must be positive!' }
-    ]
+    price: [] // Bỏ validate cho giá
 };
 
-export default function PostsPage() {
-    const { user, isAuthenticated, logout, isLoading } = useAuth();
+export default function QuanLyBaiViet() {
+    const { user } = useAuth();
 
-    console.log('PostsPage user:', user);
     const [form] = Form.useForm();
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [tableLoading, setTableLoading] = useState(false);
+    const [baiViet, setBaiViet] = useState<Post[]>([]);
+    const [dangTai, setDangTai] = useState(false);
+    const [dangTaiBang, setDangTaiBang] = useState(false);
 
-    useEffect(() => { loadPosts(); }, []);
+    useEffect(() => { taiBaiViet(); }, []);
 
-    const loadPosts = async () => {
-        setTableLoading(true);
+    const taiBaiViet = async () => {
+        setDangTaiBang(true);
         try {
             const data = await getPosts();
-            console.log('Loaded posts:', data);
-            setPosts(data);
+            setBaiViet(data);
         } catch {
-            message.error('Failed to load posts');
+            message.error('Không tải được danh sách bài viết');
         } finally {
-            setTableLoading(false);
+            setDangTaiBang(false);
         }
     };
-
 
     const onFinish = async (values: CreatePostRequest) => {
-        setLoading(true);
+        setDangTai(true);
         try {
             await createPost(values);
-            await loadPosts();
+            await taiBaiViet();
             form.resetFields();
-            message.success('Post created successfully!');
+            message.success('Thêm bài viết thành công!');
         } catch {
-            message.error('Failed to create post');
+            message.error('Không thể thêm bài viết');
         } finally {
-            setLoading(false);
+            setDangTai(false);
         }
     };
 
-
-    const handleDelete = async (id: string) => {
+    const xoaBaiViet = async (id: string) => {
         try {
             await deletePost(Number(id));
-            setPosts(posts.filter(p => String(p._id) !== id));
-            message.success('Post deleted successfully!');
+            setBaiViet(baiViet.filter(p => String(p._id) !== id));
+            message.success('Xóa bài viết thành công!');
         } catch {
-            message.error('Failed to delete post');
+            message.error('Không thể xóa bài viết');
         }
     };
 
-    const columns = [
-        { title: 'Name', dataIndex: 'name', key: 'name', width: '25%', ellipsis: true },
+    const cotBang = [
+        { title: 'Tiêu đề', dataIndex: 'name', key: 'name', width: '25%', ellipsis: true },
         {
-            title: 'Content', dataIndex: 'content', key: 'content', width: '50%', ellipsis: true,
+            title: 'Nội dung', dataIndex: 'content', key: 'content', width: '50%', ellipsis: true,
             render: (text: string) => <div style={{ maxHeight: 60, overflow: 'hidden' }}>{text}</div>
         },
-        { title: 'Price', dataIndex: 'price', key: 'price', width: '15%', },
+        { title: 'Giá', dataIndex: 'price', key: 'price', width: '15%' },
         {
-            title: 'Actions', key: 'actions', width: '10%',
+            title: 'Thao tác', key: 'actions', width: '10%',
             render: (_: any, r: Post) => (
-                <Button type="link" icon={<DeleteOutlined />} danger onClick={() => handleDelete(String(r._id))} size="small" />
+                <Button type="link" icon={<DeleteOutlined />} danger onClick={() => xoaBaiViet(String(r._id))} size="small" />
             )
         }
     ];
 
     return (
         <div style={{ padding: 24, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-            <Title level={2} style={{ marginBottom: 24, color: '#1890ff' }}>Post Management</Title>
+            <Title level={2} style={{ marginBottom: 24, color: '#1890ff' }}>Quản lý bài viết</Title>
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={8}>
-                    <Card title={<Space><PlusOutlined />Add New Post</Space>}>
+                    <Card title={<Space><PlusOutlined />Thêm bài viết mới</Space>}>
                         <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
-                            <Form.Item label="Post Name" name="name" rules={formRules.name}>
-                                <Input placeholder="Enter post name" size="large" />
+                            <Form.Item label="Tiêu đề" name="name" rules={quyTacForm.name}>
+                                <Input placeholder="Nhập tiêu đề bài viết" size="large" />
                             </Form.Item>
-                            <Form.Item label="Content" name="content" rules={formRules.content}>
-                                <TextArea rows={4} placeholder="Enter post content" showCount maxLength={500} />
+                            <Form.Item label="Nội dung" name="content" rules={quyTacForm.content}>
+                                <TextArea rows={4} placeholder="Nhập nội dung bài viết" showCount maxLength={500} />
                             </Form.Item>
-                            <Form.Item label="Price" name="price" rules={formRules.price}>
-                                <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} size="large" addonBefore="$" />
+                            <Form.Item label="Giá" name="price" rules={quyTacForm.price}>
+                                <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} size="large" addonAfter="₫" />
                             </Form.Item>
                             <Form.Item style={{ marginBottom: 0 }}>
-                                <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<PlusOutlined />}>
-                                    Add Post
+                                <Button type="primary" htmlType="submit" loading={dangTai} block size="large" icon={<PlusOutlined />}>
+                                    Thêm bài viết
                                 </Button>
                             </Form.Item>
                         </Form>
@@ -115,14 +109,24 @@ export default function PostsPage() {
                 </Col>
                 <Col xs={24} lg={16}>
                     <Card
-                        title={<Space><EditOutlined />Posts List ({posts.length})<Button type="text" icon={<ReloadOutlined />} onClick={loadPosts} loading={tableLoading} size="small" /></Space>}
+                        title={
+                            <Space>
+                                <EditOutlined />Danh sách bài viết ({baiViet.length})
+                                <Button type="text" icon={<ReloadOutlined />} onClick={taiBaiViet} loading={dangTaiBang} size="small" />
+                            </Space>
+                        }
                     >
                         <Table
-                            columns={columns}
-                            dataSource={posts}
+                            columns={cotBang}
+                            dataSource={baiViet}
                             rowKey="_id"
-                            loading={tableLoading}
-                            pagination={{ pageSize: 10, showSizeChanger: true, showQuickJumper: true, showTotal: (t, r) => `${r[0]}-${r[1]} of ${t} posts` }}
+                            loading={dangTaiBang}
+                            pagination={{
+                                pageSize: 10,
+                                showSizeChanger: true,
+                                showQuickJumper: true,
+                                showTotal: (tong, range) => `${range[0]}-${range[1]} của ${tong} bài viết`
+                            }}
                             scroll={{ x: 600 }}
                         />
                     </Card>

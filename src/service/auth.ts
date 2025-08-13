@@ -1,4 +1,5 @@
 import apiClient from '../config/axios';
+import Cookies from 'js-cookie';
 
 export interface LoginRequest {
     email: string;
@@ -6,8 +7,10 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    access_token: string;
-    refresh_token?: string;
+    data: {
+        accessToken: string;
+        refreshToken: string;
+    }
     user: {
         id: number;
         name: string;
@@ -33,18 +36,33 @@ export const authService = {
                 status: error.response?.status,
                 statusText: error.response?.statusText
             });
-            throw error;
+
+            // Tạo lỗi với thông tin chi tiết hơn
+            const enhancedError = {
+                ...error,
+                response: {
+                    ...error.response,
+                    data: {
+                        message: error.response?.data?.message ||
+                            error.response?.data?.error ||
+                            error.message,
+                        ...error.response?.data
+                    }
+                }
+            };
+
+            throw enhancedError;
         }
     },
 
     logout: () => {
         // AuthContext sẽ xử lý việc xóa cookie
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        Cookies.remove('access_token');
+        Cookies.remove('refresh_token');
     },
 
     getCurrentUser: () => {
-        const token = localStorage.getItem('access_token');
+        const token = Cookies.get('access_token');
         return token ? true : false;
     }
 };

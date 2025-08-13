@@ -60,17 +60,6 @@ const AuthDemo: React.FC = () => {
                         </Descriptions>
                     </div>
                 )}
-
-                <Space>
-                    <Button onClick={refreshUserData}>
-                        Làm mới thông tin
-                    </Button>
-                    {isAuthenticated && (
-                        <Button type="primary" danger onClick={logout}>
-                            Đăng xuất
-                        </Button>
-                    )}
-                </Space>
             </Space>
         </Card>
     );

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080/',
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
@@ -33,6 +33,16 @@ apiClient.interceptors.response.use(
     response => response,
     async error => {
         const originalRequest = error.config;
+
+        // Xử lý timeout
+        if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+            error.message = 'Kết nối quá chậm. Vui lòng thử lại!';
+        }
+
+        // Xử lý lỗi mạng
+        if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+            error.message = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet!';
+        }
 
         if (
             (error.response?.status === 401 || error.response?.status === 403) &&

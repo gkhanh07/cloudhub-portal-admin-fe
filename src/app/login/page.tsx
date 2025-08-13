@@ -8,37 +8,61 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
-interface LoginForm {
+// Sửa interface để khớp với dữ liệu form
+interface LoginFormValues {
     email: string;
     password: string;
+}
+
+interface LoginResponse {
+    data: {
+        accessToken: string;
+        refreshToken: string;
+    };
 }
 
 const LoginPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { login } = useAuth();
+    console.log('env', process.env.NEXT_PUBLIC_API_URL);
 
-    const onFinish = async (values: LoginForm) => {
+    const onFinish = async (values: LoginFormValues) => {
         setLoading(true);
         try {
             console.log('Attempting login with:', values);
-            const response = await authService.login(values);
+            const response: LoginResponse = await authService.login(values);
             console.log('Login response:', response);
 
-            // Lưu token vào AuthContext
-            if (response.access_token) {
-                login(response.access_token);
+            if (response.data.accessToken) {
+                login(response.data.accessToken, response.data.refreshToken);
                 message.success('Đăng nhập thành công!');
-                router.push('/'); // Redirect to dashboard
+                router.push('/');
             } else {
                 throw new Error('Token không được trả về từ server');
             }
         } catch (error: any) {
             console.error('Login error:', error);
             console.error('Error response:', error?.response);
-            const errorMessage = error?.response?.data?.message ||
-                error?.message ||
-                'Đăng nhập thất bại!';
+
+            let errorMessage = 'Đăng nhập thất bại!';
+
+            if (error?.response?.status === 401) {
+                errorMessage = 'Tài khoản hoặc mật khẩu không chính xác!';
+            } else if (error?.response?.status === 400) {
+                errorMessage = 'Thông tin đăng nhập không hợp lệ!';
+            } else if (error?.response?.status === 404) {
+                errorMessage = 'Tài khoản không tồn tại!';
+            } else if (error?.response?.status === 429) {
+                errorMessage = 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau!';
+            } else if (error?.response?.status >= 500) {
+                errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!';
+            } else if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Network Error')) {
+                errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet!';
+            } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+
             message.error(errorMessage);
         } finally {
             setLoading(false);
@@ -75,18 +99,21 @@ const LoginPage: React.FC = () => {
                         onFinish={onFinish}
                         layout="vertical"
                         size="large"
+                    // Xóa onSubmitCapture vì nó không cần thiết và có thể gây xung đột
                     >
                         <Form.Item
                             label="Email"
                             name="email"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập email!' },
-                                { type: 'email', message: 'Email không hợp lệ!' }
+                                { type: 'email', message: 'Định dạng email không hợp lệ!' },
+                                { max: 255, message: 'Email không được quá 255 ký tự!' }
                             ]}
                         >
                             <Input
                                 prefix={<UserOutlined />}
                                 placeholder="Nhập email của bạn"
+                                autoComplete="email"
                             />
                         </Form.Item>
 
@@ -95,12 +122,14 @@ const LoginPage: React.FC = () => {
                             name="password"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
+                                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' },
+                                { max: 50, message: 'Mật khẩu không được quá 50 ký tự!' }
                             ]}
                         >
                             <Input.Password
                                 prefix={<LockOutlined />}
                                 placeholder="Nhập mật khẩu"
+                                autoComplete="current-password"
                             />
                         </Form.Item>
 
