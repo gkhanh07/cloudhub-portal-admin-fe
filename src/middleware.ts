@@ -3,13 +3,18 @@ import { NextResponse, NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
 
-    if (url.pathname === '/login') {
+    // Cho phép các route public
+    if (url.pathname === '/login' || url.pathname.startsWith('/_next') || url.pathname.startsWith('/api')) {
         return NextResponse.next();
     }
 
     const accessToken = request.cookies.get('access_token')?.value;
 
+    // Debug: Log để kiểm tra
+    console.log('Middleware - Path:', url.pathname, 'Token exists:', !!accessToken);
+
     if (!accessToken) {
+        console.log('No token found, redirecting to login');
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
@@ -18,5 +23,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login).*)',]
 };

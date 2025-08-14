@@ -67,13 +67,19 @@ const ThanhMenu: React.FC = () => {
             return;
         }
 
-        if (Object.values(duongDanToKey).includes(key)) {
-            const duongDanMoi = Object.keys(duongDanToKey).find(
-                (path) => duongDanToKey[path] === key
-            );
-            if (duongDanMoi) router.push(duongDanMoi);
+        // Map key → đường dẫn
+        const duongDanMoi = Object.entries(duongDanToKey).find(
+            ([, value]) => value === key
+        )?.[0];
+
+        if (duongDanMoi) {
+            router.push(duongDanMoi);
+            setKeyDangChon([key]); // cập nhật highlight menu
+        } else {
+            console.warn('Key menu chưa map tới đường dẫn:', key);
         }
     };
+
 
     return (
         <div style={{ width: 256, padding: 16 }}>

@@ -23,67 +23,69 @@ import { newsService, News } from '../../service/news';
 const { TextArea } = Input;
 
 const NewsPage = () => {
-    const [news, setNews] = useState<News[]>([]);
-    const [filteredNews, setFilteredNews] = useState<News[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [viewModalVisible, setViewModalVisible] = useState(false);
+    const [newsList, setNewsList] = useState<News[]>([]);
+    const [filteredNewsList, setFilteredNewsList] = useState<News[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
     const [viewingNews, setViewingNews] = useState<News | null>(null);
     const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
 
     useEffect(() => {
-        loadNews();
+        loadNewsList();
     }, []);
 
     useEffect(() => {
-        setFilteredNews(news.filter(item =>
-            item.title?.toLowerCase().includes(searchText.toLowerCase())
-        ));
-    }, [news, searchText]);
+        setFilteredNewsList(
+            newsList.filter(item =>
+                item.title?.toLowerCase().includes(searchText.toLowerCase())
+            )
+        );
+    }, [newsList, searchText]);
 
-    const loadNews = async () => {
-        setLoading(true);
+    const loadNewsList = async () => {
+        setIsLoading(true);
         try {
             const response = await newsService.getAllNews();
             if (response.success) {
-                setNews(response.data);
+                setNewsList(Array.isArray(response.data) ? response.data : []);
             } else {
                 message.error(response.message || 'Không tải được tin tức');
             }
         } catch {
             message.error('Không tải được tin tức');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
-    const handleAdd = () => {
+    const handleAddNews = () => {
         setEditingNews(null);
         form.resetFields();
-        setModalVisible(true);
+        setIsModalVisible(true);
     };
 
-    const handleEdit = (newsItem: News) => {
+    const handleEditNews = (newsItem: News) => {
         setEditingNews(newsItem);
         form.setFieldsValue({
             ...newsItem,
             publishedAt: newsItem.publishedAt ? dayjs(newsItem.publishedAt) : null,
         });
-        setModalVisible(true);
+        setIsModalVisible(true);
     };
 
-    const handleView = (newsItem: News) => {
+    const handleViewNews = (newsItem: News) => {
         setViewingNews(newsItem);
-        setViewModalVisible(true);
+        setIsViewModalVisible(true);
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDeleteNews = async (id: string) => {
         try {
             const response = await newsService.deleteNews(id);
             if (response.success) {
-                setNews(news.filter(item => item._id !== id));
+                setNewsList(newsList.filter(item => item._id !== id));
                 message.success('Xóa tin tức thành công');
             } else {
                 message.error(response.message || 'Xóa tin tức thất bại');
@@ -93,7 +95,7 @@ const NewsPage = () => {
         }
     };
 
-    const handleSubmit = async (values: any) => {
+    const handleSubmitForm = async (values: any) => {
         try {
             if (values.imageUrl && values.imageUrl.startsWith('blob:')) {
                 message.error('Vui lòng nhập URL ảnh thực tế thay vì chọn file local.');
@@ -113,7 +115,9 @@ const NewsPage = () => {
             if (editingNews) {
                 const response = await newsService.updateNews(editingNews._id, newsData);
                 if (response.success) {
-                    setNews(news.map(item => item._id === editingNews._id ? response.data : item));
+                    setNewsList(newsList.map(item =>
+                        item._id === editingNews._id ? response.data : item
+                    ));
                     message.success('Cập nhật tin tức thành công');
                 } else {
                     message.error(response.message || 'Cập nhật tin tức thất bại');
@@ -121,21 +125,21 @@ const NewsPage = () => {
             } else {
                 const response = await newsService.createNews(newsData);
                 if (response.success) {
-                    setNews([...news, response.data]);
+                    setNewsList([...newsList, response.data]);
                     message.success('Thêm tin tức thành công');
                 } else {
                     message.error(response.message || 'Thêm tin tức thất bại');
                 }
             }
 
-            setModalVisible(false);
+            setIsModalVisible(false);
             form.resetFields();
         } catch {
             message.error('Lưu tin tức thất bại');
         }
     };
 
-    const columns = [
+    const tableColumns = [
         {
             title: 'ID',
             dataIndex: '_id',
@@ -173,7 +177,8 @@ const NewsPage = () => {
             title: 'Ngày đăng',
             dataIndex: 'publishedAt',
             key: 'publishedAt',
-            render: (date: string) => date ? dayjs(date).format('YYYY-MM-DD HH:mm') : 'Chưa đăng',
+            render: (date: string) =>
+                date ? dayjs(date).format('YYYY-MM-DD HH:mm') : 'Chưa đăng',
             sorter: (a: News, b: News) => {
                 const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
                 const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
@@ -206,17 +211,17 @@ const NewsPage = () => {
                         type="default"
                         icon={<EyeOutlined />}
                         size="small"
-                        onClick={() => handleView(record)}
+                        onClick={() => handleViewNews(record)}
                     />
                     <Button
                         type="primary"
                         icon={<EditOutlined />}
                         size="small"
-                        onClick={() => handleEdit(record)}
+                        onClick={() => handleEditNews(record)}
                     />
                     <Popconfirm
                         title="Bạn có chắc muốn xóa tin tức này?"
-                        onConfirm={() => handleDelete(record._id)}
+                        onConfirm={() => handleDeleteNews(record._id)}
                         okText="Có"
                         cancelText="Không"
                     >
@@ -245,17 +250,17 @@ const NewsPage = () => {
                     />
                 </Col>
                 <Col span={12} style={{ textAlign: 'right' }}>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAddNews}>
                         Thêm tin tức
                     </Button>
                 </Col>
             </Row>
 
             <Table
-                columns={columns}
-                dataSource={filteredNews}
+                columns={tableColumns}
+                dataSource={filteredNewsList}
                 rowKey="_id"
-                loading={loading}
+                loading={isLoading}
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
@@ -268,15 +273,15 @@ const NewsPage = () => {
 
             <Modal
                 title={editingNews ? 'Chỉnh sửa tin tức' : 'Thêm tin tức'}
-                open={modalVisible}
-                onCancel={() => setModalVisible(false)}
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
                 footer={null}
                 width={800}
             >
                 <Form
                     form={form}
                     layout="vertical"
-                    onFinish={handleSubmit}
+                    onFinish={handleSubmitForm}
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
@@ -319,10 +324,7 @@ const NewsPage = () => {
                         </Col>
                     </Row>
 
-                    <Form.Item
-                        label="URL Ảnh"
-                        name="imageUrl"
-                    >
+                    <Form.Item label="URL Ảnh" name="imageUrl">
                         <Input placeholder="Nhập URL ảnh hoặc chọn file bên dưới" />
                     </Form.Item>
 
@@ -372,7 +374,7 @@ const NewsPage = () => {
 
                     <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
                         <Space>
-                            <Button onClick={() => setModalVisible(false)}>Hủy</Button>
+                            <Button onClick={() => setIsModalVisible(false)}>Hủy</Button>
                             <Button type="primary" htmlType="submit">
                                 {editingNews ? 'Cập nhật' : 'Thêm mới'}
                             </Button>
@@ -383,10 +385,10 @@ const NewsPage = () => {
 
             <Modal
                 title="Chi tiết tin tức"
-                open={viewModalVisible}
-                onCancel={() => setViewModalVisible(false)}
+                open={isViewModalVisible}
+                onCancel={() => setIsViewModalVisible(false)}
                 footer={[
-                    <Button key="close" onClick={() => setViewModalVisible(false)}>
+                    <Button key="close" onClick={() => setIsViewModalVisible(false)}>
                         Đóng
                     </Button>
                 ]}
