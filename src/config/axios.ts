@@ -32,6 +32,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
     response => response,
     async error => {
+        const baseURL = process.env.NEXT_PUBLIC_API_URL;
         const originalRequest = error.config;
 
         // Xử lý timeout
@@ -58,7 +59,7 @@ apiClient.interceptors.response.use(
                     return Promise.reject(error);
                 }
 
-                const refreshResponse = await axios.post('http://localhost:8080/users/refresh-token', {
+                const refreshResponse = await axios.post(`${baseURL}users/refresh-token`, {
                     refreshToken,
                 });
 

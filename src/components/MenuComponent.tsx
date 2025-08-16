@@ -19,7 +19,7 @@ const { Text } = Typography;
 // Danh sách menu
 const mucMenu = [
     { key: 'trang-chu', icon: <HomeOutlined />, label: 'Trang chủ' },
-    { key: 'bai-viet', icon: <EditOutlined />, label: 'Bài viết' },
+    { key: 'bai-viet', icon: <EditOutlined />, label: 'Các dịch vụ cơ bản' },
     { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
     { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục' },
     { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức' },

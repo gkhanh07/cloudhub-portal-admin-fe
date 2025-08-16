@@ -1,6 +1,8 @@
 'use client'
+
 import { usePathname } from 'next/navigation';
 import MenuComponent from './MenuComponent';
+import NextTopLoader from 'nextjs-toploader';
 
 interface ConditionalLayoutProps {
     children: React.ReactNode;
@@ -8,8 +10,6 @@ interface ConditionalLayoutProps {
 
 const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     const pathname = usePathname();
-
-    // Don't show sidebar for login page
     const isLoginPage = pathname === '/login';
 
     if (isLoginPage) {
@@ -18,9 +18,17 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
 
     return (
         <div className="layout-container">
+            {/* Progress bar */}
+            <NextTopLoader
+                color="black"
+                height={3}
+                showSpinner={false}
+            />
+
             <aside className="sidebar">
                 <MenuComponent />
             </aside>
+
             <main className="content">
                 {children}
             </main>

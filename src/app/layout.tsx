@@ -1,7 +1,13 @@
+
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import '@/app/globals.css'
 import ConditionalLayout from '@/components/ConditionalLayout';
 import { AuthProvider } from '@/contexts/AuthContext';
+
+import NextTopLoader from 'nextjs-toploader';
+
+
+
 
 export const metadata = {
   title: 'Admin',
@@ -16,9 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+
         <AuthProvider>
           <AntdRegistry>
+
             <ConditionalLayout>
+
               {children}
             </ConditionalLayout>
           </AntdRegistry>

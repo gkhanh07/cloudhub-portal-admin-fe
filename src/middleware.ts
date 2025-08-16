@@ -10,7 +10,6 @@ export function middleware(request: NextRequest) {
 
     const accessToken = request.cookies.get('access_token')?.value;
 
-    // Debug: Log để kiểm tra
     console.log('Middleware - Path:', url.pathname, 'Token exists:', !!accessToken);
 
     if (!accessToken) {
