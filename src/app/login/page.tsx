@@ -37,12 +37,20 @@ const LoginPage: React.FC = () => {
             if (response.data.accessToken) {
                 login(response.data.accessToken, response.data.refreshToken);
                 message.success('Đăng nhập thành công!');
+
+                // Đợi một chút để user thấy thông báo thành công trước khi chuyển trang
+                await new Promise(resolve => setTimeout(resolve, 500));
+
                 router.push('/');
+
+                // Không setLoading(false) ở đây để loading tiếp tục cho đến khi chuyển trang
+                return;
             } else {
                 throw new Error('Token không được trả về từ server');
             }
         } catch (error: any) {
-
+            // Chỉ tắt loading khi có lỗi
+            setLoading(false);
 
             let errorMessage = 'Đăng nhập thất bại!';
 
@@ -63,8 +71,6 @@ const LoginPage: React.FC = () => {
             }
 
             message.error(errorMessage);
-        } finally {
-            setLoading(false);
         }
     };
 

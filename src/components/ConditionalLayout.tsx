@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import MenuComponent from './MenuComponent';
-
+import NextTopLoader from 'nextjs-toploader';
 
 interface ConditionalLayoutProps {
     children: React.ReactNode;
@@ -13,13 +13,15 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     const isLoginPage = pathname === '/login';
 
     if (isLoginPage) {
-        return <>{children}</>;
+        return <>
+            {children}
+        </>;
     }
 
     return (
         <div className="layout-container">
 
-
+            <NextTopLoader />
             <aside className="sidebar">
                 <MenuComponent />
             </aside>
