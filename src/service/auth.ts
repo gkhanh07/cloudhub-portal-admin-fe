@@ -21,11 +21,8 @@ export interface LoginResponse {
 export const authService = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         try {
-            console.log('Sending login request:', credentials);
             const response = await apiClient.post('/users/login', credentials);
-            console.log('Full response:', response);
             const data = response.data;
-            console.log('Response data:', data);
 
             // Trả về data để AuthContext xử lý token
             return data;

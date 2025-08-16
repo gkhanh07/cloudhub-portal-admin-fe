@@ -10,48 +10,37 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { Menu, Modal, Avatar, Typography, Divider } from 'antd';
-import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { authService } from '../service/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 const { Text } = Typography;
 
-// Danh sách menu
+// Map key menu → { label, icon, path }
 const mucMenu = [
-    { key: 'trang-chu', icon: <HomeOutlined />, label: 'Trang chủ' },
-    { key: 'bai-viet', icon: <EditOutlined />, label: 'Các dịch vụ cơ bản' },
-    { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
-    { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục' },
-    { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức' },
-    { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' },
+    { key: 'trang-chu', icon: <HomeOutlined />, label: 'Trang chủ', path: '/' },
+    { key: 'bai-viet', icon: <EditOutlined />, label: 'Các dịch vụ cơ bản', path: '/posts' },
+    { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm', path: '/products' },
+    { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục', path: '/categories' },
+    { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức', path: '/news' },
+    { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' }, // đặc biệt
 ];
 
-// Map đường dẫn → key menu
-const duongDanToKey: Record<string, string> = {
-    '/': 'trang-chu',
-    '/posts': 'bai-viet',
-    '/products': 'san-pham',
-    '/categories': 'danh-muc',
-    '/news': 'tin-tuc',
-};
-
 const ThanhMenu: React.FC = () => {
-    const router = useRouter();
     const duongDanHienTai = usePathname();
-
-    // Key menu ban đầu dựa trên đường dẫn hiện tại
-    const keyBanDau = duongDanToKey[duongDanHienTai] || 'trang-chu';
-    const [keyDangChon, setKeyDangChon] = useState<string[]>([keyBanDau]);
-
     const { user } = useAuth();
     const [anhDaiDien, setAnhDaiDien] = useState<string | null>(null);
 
-    // Cập nhật menu khi đường dẫn thay đổi
+    // Key menu ban đầu dựa trên pathname
+    const [keyDangChon, setKeyDangChon] = useState<string[]>([]);
+
     useLayoutEffect(() => {
-        setKeyDangChon([duongDanToKey[duongDanHienTai] || 'trang-chu']);
+        const found = mucMenu.find((item) => item.path === duongDanHienTai);
+        setKeyDangChon([found?.key || 'trang-chu']);
     }, [duongDanHienTai]);
 
-    // Xử lý khi click menu
+    // Xử lý logout
     const xuLyClickMenu = ({ key }: { key: string }) => {
         if (key === 'dang-xuat') {
             Modal.confirm({
@@ -61,25 +50,11 @@ const ThanhMenu: React.FC = () => {
                 cancelText: 'Hủy',
                 onOk: () => {
                     authService.logout();
-                    router.push('/login');
+                    window.location.href = '/login'; // dùng reload thay vì router.push
                 },
             });
-            return;
-        }
-
-        // Map key → đường dẫn
-        const duongDanMoi = Object.entries(duongDanToKey).find(
-            ([, value]) => value === key
-        )?.[0];
-
-        if (duongDanMoi) {
-            router.push(duongDanMoi);
-            setKeyDangChon([key]); // cập nhật highlight menu
-        } else {
-            console.warn('Key menu chưa map tới đường dẫn:', key);
         }
     };
-
 
     return (
         <div style={{ width: 256, padding: 16 }}>
@@ -110,8 +85,17 @@ const ThanhMenu: React.FC = () => {
                 selectedKeys={keyDangChon}
                 mode="inline"
                 theme="light"
-                items={mucMenu}
                 onClick={xuLyClickMenu}
+                items={mucMenu.map((item) => ({
+                    key: item.key,
+                    icon: item.icon,
+                    label:
+                        item.key === 'dang-xuat' ? (
+                            item.label
+                        ) : (
+                            <Link href={item.path!}>{item.label}</Link>
+                        ),
+                }))}
                 style={{ borderRight: 'none' }}
             />
         </div>
