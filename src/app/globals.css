@@ -41,3 +41,88 @@ body {
     border-bottom: 1px solid #f0f0f0;
   }
 }
+
+/* React Quill Editor Styles */
+@import 'react-quill/dist/quill.snow.css';
+
+.ql-editor {
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ql-toolbar {
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  background: #f8f8f8;
+}
+
+.ql-container {
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  background: white;
+}
+
+/* Content display styles */
+.quill-content p {
+  margin-bottom: 8px;
+}
+
+.quill-content ul,
+.quill-content ol {
+  margin-left: 20px;
+  margin-bottom: 8px;
+}
+
+.quill-content h1,
+.quill-content h2,
+.quill-content h3,
+.quill-content h4,
+.quill-content h5,
+.quill-content h6 {
+  margin-bottom: 8px;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+.quill-content h1 {
+  font-size: 2em;
+}
+
+.quill-content h2 {
+  font-size: 1.5em;
+}
+
+.quill-content h3 {
+  font-size: 1.17em;
+}
+
+.quill-content h4 {
+  font-size: 1em;
+}
+
+.quill-content h5 {
+  font-size: 0.83em;
+}
+
+.quill-content h6 {
+  font-size: 0.67em;
+}
+
+.quill-content strong {
+  font-weight: bold;
+}
+
+.quill-content em {
+  font-style: italic;
+}
+
+.quill-content u {
+  text-decoration: underline;
+}
+
+.quill-content s {
+  text-decoration: line-through;
+}

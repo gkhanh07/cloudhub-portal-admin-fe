@@ -51,6 +51,15 @@ export interface SingleNewsResponse {
     message?: string;
 }
 
+export interface UploadImageResponse {
+    success: boolean;
+    data: {
+        imageUrl: string;
+        fileName: string;
+    };
+    message?: string;
+}
+
 export const newsService = {
     // Public routes - no authentication required
     getAllNews: async (): Promise<NewsResponse> => {
@@ -101,6 +110,27 @@ export const newsService = {
             return response.data;
         } catch (error) {
             console.error(`Error deleting news with id ${id}:`, error);
+            throw error;
+        }
+    },
+
+    // Upload image for news - Admin only
+    uploadImage: async (file: File): Promise<UploadImageResponse> => {
+        try {
+            // Tạo FormData để gửi file
+            const formData = new FormData();
+            formData.append('image', file);
+
+            // Gửi request với Content-Type multipart/form-data
+            const response = await apiClient.post('/news/upload-image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Error uploading image:', error);
             throw error;
         }
     }

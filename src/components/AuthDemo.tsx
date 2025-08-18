@@ -47,16 +47,7 @@ const AuthDemo: React.FC = () => {
                                     {user.role}
                                 </Descriptions.Item>
                             )}
-                            {user.exp && (
-                                <Descriptions.Item label="Token hết hạn">
-                                    {new Date(user.exp * 1000).toLocaleString('vi-VN')}
-                                </Descriptions.Item>
-                            )}
-                            {user.iat && (
-                                <Descriptions.Item label="Token được tạo">
-                                    {new Date(user.iat * 1000).toLocaleString('vi-VN')}
-                                </Descriptions.Item>
-                            )}
+
                         </Descriptions>
                     </div>
                 )}

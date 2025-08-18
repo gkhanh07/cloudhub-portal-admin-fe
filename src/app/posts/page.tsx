@@ -74,7 +74,13 @@ export default function QuanLyBaiViet() {
             title: 'Nội dung', dataIndex: 'content', key: 'content', width: '50%', ellipsis: true,
             render: (text: string) => <div style={{ maxHeight: 60, overflow: 'hidden' }}>{text}</div>
         },
-        { title: 'Giá', dataIndex: 'price', key: 'price', width: '15%' },
+        {
+            title: 'Giá',
+            dataIndex: 'price',
+            key: 'price',
+            width: '15%',
+            render: (price: number) => price ? `${price.toLocaleString('vi-VN')}vn₫` : '0₫'
+        },
         {
             title: 'Thao tác', key: 'actions', width: '10%',
             render: (_: any, r: Post) => (
@@ -97,7 +103,16 @@ export default function QuanLyBaiViet() {
                                 <TextArea rows={4} placeholder="Nhập nội dung bài viết" showCount maxLength={500} />
                             </Form.Item>
                             <Form.Item label="Giá" name="price" rules={quyTacForm.price}>
-                                <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} size="large" addonAfter="₫" />
+                                <InputNumber
+                                    min={0}
+                                    step={1}
+                                    precision={0}
+                                    style={{ width: '100%' }}
+                                    size="large"
+                                    addonAfter="₫"
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => Number(value?.replace(/\$\s?|(,*)/g, '') || 0) as any}
+                                />
                             </Form.Item>
                             <Form.Item style={{ marginBottom: 0 }}>
                                 <Button type="primary" htmlType="submit" loading={dangTai} block size="large" icon={<PlusOutlined />}>

@@ -18,9 +18,34 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import dynamic from 'next/dynamic';
 import { newsService, News } from '../../service/news';
+import { uploadImage, getFileUrl } from '../../store/appwrite';
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 const { TextArea } = Input;
+
+// Quill editor configuration
+const quillModules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        ['link', 'image'],
+        [{ 'align': [] }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['clean']
+    ],
+};
+
+const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet', 'indent',
+    'link', 'image', 'align', 'color', 'background'
+];
 
 const NewsPage = () => {
     const [newsList, setNewsList] = useState<News[]>([]);
@@ -32,6 +57,9 @@ const NewsPage = () => {
     const [viewingNews, setViewingNews] = useState<News | null>(null);
     const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
+    const [uploading, setUploading] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+
 
     useEffect(() => {
         loadNewsList();
@@ -64,11 +92,17 @@ const NewsPage = () => {
     const handleAddNews = () => {
         setEditingNews(null);
         form.resetFields();
+        setUploadedImageUrl('');
+        // Tự động đặt ngày hiện tại
+        form.setFieldsValue({
+            publishedAt: dayjs()
+        });
         setIsModalVisible(true);
     };
 
     const handleEditNews = (newsItem: News) => {
         setEditingNews(newsItem);
+        setUploadedImageUrl(newsItem.imageUrl || '');
         form.setFieldsValue({
             ...newsItem,
             publishedAt: newsItem.publishedAt ? dayjs(newsItem.publishedAt) : null,
@@ -95,19 +129,30 @@ const NewsPage = () => {
         }
     };
 
+    const handleImageUpload = async (file: File) => {
+        setUploading(true);
+        try {
+            const uploadedFile = await uploadImage(file);
+            const imageUrl = getFileUrl(uploadedFile.$id);
+            setUploadedImageUrl(imageUrl);
+            form.setFieldsValue({ imageUrl: imageUrl });
+            message.success('Tải ảnh lên thành công!');
+            return imageUrl;
+        } catch (error) {
+            message.error('Tải ảnh lên thất bại!');
+            console.error('Upload error:', error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmitForm = async (values: any) => {
         try {
-            if (values.imageUrl && values.imageUrl.startsWith('blob:')) {
-                message.error('Vui lòng nhập URL ảnh thực tế thay vì chọn file local.');
-                return;
-            }
-
             const newsData = {
                 title: values.title,
                 content: values.content,
-                summary: values.summary,
                 author: values.author || 'Quản trị viên',
-                imageUrl: values.imageUrl || '',
+                imageUrl: uploadedImageUrl || values.imageUrl || '',
                 status: 'published' as const,
                 publishedAt: values.publishedAt ? values.publishedAt.toISOString() : undefined,
             };
@@ -133,6 +178,7 @@ const NewsPage = () => {
             }
 
             setIsModalVisible(false);
+            setUploadedImageUrl('');
             form.resetFields();
         } catch {
             message.error('Lưu tin tức thất bại');
@@ -155,23 +201,29 @@ const NewsPage = () => {
             width: 200,
         },
         {
-            title: 'Tóm tắt',
-            dataIndex: 'summary',
-            key: 'summary',
-            width: 250,
-            ellipsis: true,
-        },
-        {
             title: 'Nội dung',
             dataIndex: 'content',
             key: 'content',
             width: 300,
             ellipsis: true,
-            render: (content: string) => (
-                <div style={{ maxWidth: 300 }}>
-                    {content?.length > 100 ? `${content.substring(0, 100)}...` : content}
-                </div>
-            ),
+            render: (content: string) => {
+                // Strip HTML tags for table display
+                const stripHtml = (html: string) => {
+                    if (typeof window !== 'undefined') {
+                        const tmp = document.createElement('div');
+                        tmp.innerHTML = html || '';
+                        return tmp.textContent || tmp.innerText || '';
+                    }
+                    return html || '';
+                };
+
+                const textContent = stripHtml(content);
+                return (
+                    <div style={{ maxWidth: 300 }}>
+                        {textContent.length > 100 ? `${textContent.substring(0, 100)}...` : textContent}
+                    </div>
+                );
+            },
         },
         {
             title: 'Ngày đăng',
@@ -274,7 +326,11 @@ const NewsPage = () => {
             <Modal
                 title={editingNews ? 'Chỉnh sửa tin tức' : 'Thêm tin tức'}
                 open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setUploadedImageUrl('');
+                    form.resetFields();
+                }}
                 footer={null}
                 width={800}
             >
@@ -293,77 +349,93 @@ const NewsPage = () => {
                     </Form.Item>
 
                     <Form.Item
-                        label="Tóm tắt"
-                        name="summary"
-                        rules={[{ required: true, message: 'Vui lòng nhập tóm tắt!' }]}
-                    >
-                        <TextArea rows={3} />
-                    </Form.Item>
-
-                    <Form.Item
                         label="Nội dung"
                         name="content"
                         rules={[{ required: true, message: 'Vui lòng nhập nội dung!' }]}
                     >
-                        <TextArea rows={6} />
+                        <ReactQuill
+                            modules={quillModules}
+                            formats={quillFormats}
+                            style={{ height: '200px', marginBottom: '50px' }}
+                            placeholder="Nhập nội dung tin tức..."
+                        />
                     </Form.Item>
 
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Ngày đăng"
-                                name="publishedAt"
-                                rules={[{ required: true, message: 'Vui lòng chọn ngày đăng!' }]}
-                            >
-                                <DatePicker
-                                    showTime
-                                    format="YYYY-MM-DD HH:mm:ss"
-                                    style={{ width: '100%' }}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Form.Item label="URL Ảnh" name="imageUrl">
-                        <Input placeholder="Nhập URL ảnh hoặc chọn file bên dưới" />
+                    <Form.Item
+                        label="Ngày đăng"
+                        name="publishedAt"
+                        rules={[{ required: true, message: 'Vui lòng chọn ngày đăng!' }]}
+                        hidden
+                    >
+                        <DatePicker
+                            showTime
+                            format="YYYY-MM-DD HH:mm:ss"
+                            style={{ width: '100%' }}
+                        />
                     </Form.Item>
 
-                    <Form.Item label="Chọn ảnh">
+                    <Form.Item label="URL Ảnh" name="imageUrl" hidden>
+                        <Input placeholder="Nhập URL ảnh hoặc tải ảnh lên bên dưới" />
+                    </Form.Item>
+
+                    <Form.Item label="Tải ảnh lên">
                         <Upload
                             listType="picture-card"
                             maxCount={1}
-                            beforeUpload={() => false}
-                            onChange={(info) => {
-                                const file = info.file.originFileObj;
-                                if (file) {
-                                    const previewUrl = URL.createObjectURL(file);
-                                    form.setFieldsValue({ imageUrl: previewUrl });
+                            beforeUpload={(file) => {
+                                const isImage = file.type.startsWith('image/');
+                                if (!isImage) {
+                                    message.error('Chỉ được tải lên file ảnh!');
+                                    return false;
                                 }
+                                const isLt5M = file.size / 1024 / 1024 < 5;
+                                if (!isLt5M) {
+                                    message.error('Ảnh phải nhỏ hơn 5MB!');
+                                    return false;
+                                }
+                                handleImageUpload(file);
+                                return false;
                             }}
                             onRemove={() => {
+                                setUploadedImageUrl('');
                                 form.setFieldsValue({ imageUrl: '' });
                                 return true;
                             }}
+                            fileList={uploadedImageUrl ? [{
+                                uid: '1',
+                                name: 'image.png',
+                                status: 'done',
+                                url: uploadedImageUrl,
+                            }] : []}
                         >
-                            {!form.getFieldValue('imageUrl') && (
+                            {!uploadedImageUrl && !uploading && (
                                 <div>
                                     <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Chọn ảnh</div>
+                                    <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                                </div>
+                            )}
+                            {uploading && (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Đang tải...</div>
                                 </div>
                             )}
                         </Upload>
 
-                        {form.getFieldValue('imageUrl') && (
+                        {(uploadedImageUrl || form.getFieldValue('imageUrl')) && (
                             <div style={{ marginTop: 8 }}>
                                 <Image
-                                    src={form.getFieldValue('imageUrl')}
+                                    src={uploadedImageUrl || form.getFieldValue('imageUrl')}
                                     alt="preview"
                                     width={200}
                                 />
                                 <br />
                                 <Button
                                     size="small"
-                                    onClick={() => form.setFieldsValue({ imageUrl: '' })}
+                                    onClick={() => {
+                                        setUploadedImageUrl('');
+                                        form.setFieldsValue({ imageUrl: '' });
+                                    }}
                                     style={{ marginTop: 8 }}
                                 >
                                     Xóa ảnh
@@ -374,8 +446,12 @@ const NewsPage = () => {
 
                     <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
                         <Space>
-                            <Button onClick={() => setIsModalVisible(false)}>Hủy</Button>
-                            <Button type="primary" htmlType="submit">
+                            <Button onClick={() => {
+                                setIsModalVisible(false);
+                                setUploadedImageUrl('');
+                                form.resetFields();
+                            }}>Hủy</Button>
+                            <Button type="primary" htmlType="submit" loading={uploading}>
                                 {editingNews ? 'Cập nhật' : 'Thêm mới'}
                             </Button>
                         </Space>
@@ -432,21 +508,6 @@ const NewsPage = () => {
 
                         <Row gutter={[16, 16]}>
                             <Col span={24}>
-                                <h3 style={{ marginBottom: 8, color: '#1890ff' }}>Tóm tắt</h3>
-                                <p style={{
-                                    backgroundColor: '#f5f5f5',
-                                    padding: 12,
-                                    borderRadius: 6,
-                                    marginBottom: 16,
-                                    lineHeight: 1.6
-                                }}>
-                                    {viewingNews.summary || 'Không có tóm tắt'}
-                                </p>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={[16, 16]}>
-                            <Col span={24}>
                                 <h3 style={{ marginBottom: 8, color: '#1890ff' }}>Nội dung</h3>
                                 <div style={{
                                     backgroundColor: '#fafafa',
@@ -454,12 +515,16 @@ const NewsPage = () => {
                                     borderRadius: 6,
                                     border: '1px solid #d9d9d9',
                                     lineHeight: 1.8,
-                                    fontSize: 14
+                                    fontSize: 14,
+                                    minHeight: 100
                                 }}>
                                     {viewingNews.content ? (
-                                        <div dangerouslySetInnerHTML={{
-                                            __html: viewingNews.content.replace(/\n/g, '<br />')
-                                        }} />
+                                        <div
+                                            dangerouslySetInnerHTML={{
+                                                __html: viewingNews.content
+                                            }}
+                                            className="quill-content"
+                                        />
                                     ) : (
                                         <p style={{ color: '#999', fontStyle: 'italic' }}>
                                             Không có nội dung
