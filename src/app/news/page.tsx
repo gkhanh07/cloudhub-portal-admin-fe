@@ -19,6 +19,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { newsService, News } from '../../service/news';
+import { uploadImage, getFileUrl } from '../../store/appwrite';
 
 const { TextArea } = Input;
 
@@ -32,6 +33,9 @@ const NewsPage = () => {
     const [viewingNews, setViewingNews] = useState<News | null>(null);
     const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
+    const [uploading, setUploading] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+
 
     useEffect(() => {
         loadNewsList();
@@ -64,11 +68,13 @@ const NewsPage = () => {
     const handleAddNews = () => {
         setEditingNews(null);
         form.resetFields();
+        setUploadedImageUrl('');
         setIsModalVisible(true);
     };
 
     const handleEditNews = (newsItem: News) => {
         setEditingNews(newsItem);
+        setUploadedImageUrl(newsItem.imageUrl || '');
         form.setFieldsValue({
             ...newsItem,
             publishedAt: newsItem.publishedAt ? dayjs(newsItem.publishedAt) : null,
@@ -95,19 +101,31 @@ const NewsPage = () => {
         }
     };
 
+    const handleImageUpload = async (file: File) => {
+        setUploading(true);
+        try {
+            const uploadedFile = await uploadImage(file);
+            const imageUrl = getFileUrl(uploadedFile.$id);
+            setUploadedImageUrl(imageUrl);
+            form.setFieldsValue({ imageUrl: imageUrl });
+            message.success('Tải ảnh lên thành công!');
+            return imageUrl;
+        } catch (error) {
+            message.error('Tải ảnh lên thất bại!');
+            console.error('Upload error:', error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmitForm = async (values: any) => {
         try {
-            if (values.imageUrl && values.imageUrl.startsWith('blob:')) {
-                message.error('Vui lòng nhập URL ảnh thực tế thay vì chọn file local.');
-                return;
-            }
-
             const newsData = {
                 title: values.title,
                 content: values.content,
                 summary: values.summary,
                 author: values.author || 'Quản trị viên',
-                imageUrl: values.imageUrl || '',
+                imageUrl: uploadedImageUrl || values.imageUrl || '',
                 status: 'published' as const,
                 publishedAt: values.publishedAt ? values.publishedAt.toISOString() : undefined,
             };
@@ -133,6 +151,7 @@ const NewsPage = () => {
             }
 
             setIsModalVisible(false);
+            setUploadedImageUrl('');
             form.resetFields();
         } catch {
             message.error('Lưu tin tức thất bại');
@@ -274,7 +293,11 @@ const NewsPage = () => {
             <Modal
                 title={editingNews ? 'Chỉnh sửa tin tức' : 'Thêm tin tức'}
                 open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setUploadedImageUrl('');
+                    form.resetFields();
+                }}
                 footer={null}
                 width={800}
             >
@@ -324,46 +347,68 @@ const NewsPage = () => {
                         </Col>
                     </Row>
 
-                    <Form.Item label="URL Ảnh" name="imageUrl">
-                        <Input placeholder="Nhập URL ảnh hoặc chọn file bên dưới" />
+                    <Form.Item label="URL Ảnh" name="imageUrl" hidden>
+                        <Input placeholder="Nhập URL ảnh hoặc tải ảnh lên bên dưới" />
                     </Form.Item>
 
-                    <Form.Item label="Chọn ảnh">
+                    <Form.Item label="Tải ảnh lên">
                         <Upload
                             listType="picture-card"
                             maxCount={1}
-                            beforeUpload={() => false}
-                            onChange={(info) => {
-                                const file = info.file.originFileObj;
-                                if (file) {
-                                    const previewUrl = URL.createObjectURL(file);
-                                    form.setFieldsValue({ imageUrl: previewUrl });
+                            beforeUpload={(file) => {
+                                const isImage = file.type.startsWith('image/');
+                                if (!isImage) {
+                                    message.error('Chỉ được tải lên file ảnh!');
+                                    return false;
                                 }
+                                const isLt5M = file.size / 1024 / 1024 < 5;
+                                if (!isLt5M) {
+                                    message.error('Ảnh phải nhỏ hơn 5MB!');
+                                    return false;
+                                }
+                                handleImageUpload(file);
+                                return false;
                             }}
                             onRemove={() => {
+                                setUploadedImageUrl('');
                                 form.setFieldsValue({ imageUrl: '' });
                                 return true;
                             }}
+                            fileList={uploadedImageUrl ? [{
+                                uid: '1',
+                                name: 'image.png',
+                                status: 'done',
+                                url: uploadedImageUrl,
+                            }] : []}
                         >
-                            {!form.getFieldValue('imageUrl') && (
+                            {!uploadedImageUrl && !uploading && (
                                 <div>
                                     <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Chọn ảnh</div>
+                                    <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                                </div>
+                            )}
+                            {uploading && (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Đang tải...</div>
                                 </div>
                             )}
                         </Upload>
 
-                        {form.getFieldValue('imageUrl') && (
+                        {(uploadedImageUrl || form.getFieldValue('imageUrl')) && (
                             <div style={{ marginTop: 8 }}>
                                 <Image
-                                    src={form.getFieldValue('imageUrl')}
+                                    src={uploadedImageUrl || form.getFieldValue('imageUrl')}
                                     alt="preview"
                                     width={200}
                                 />
                                 <br />
                                 <Button
                                     size="small"
-                                    onClick={() => form.setFieldsValue({ imageUrl: '' })}
+                                    onClick={() => {
+                                        setUploadedImageUrl('');
+                                        form.setFieldsValue({ imageUrl: '' });
+                                    }}
                                     style={{ marginTop: 8 }}
                                 >
                                     Xóa ảnh
@@ -374,8 +419,12 @@ const NewsPage = () => {
 
                     <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
                         <Space>
-                            <Button onClick={() => setIsModalVisible(false)}>Hủy</Button>
-                            <Button type="primary" htmlType="submit">
+                            <Button onClick={() => {
+                                setIsModalVisible(false);
+                                setUploadedImageUrl('');
+                                form.resetFields();
+                            }}>Hủy</Button>
+                            <Button type="primary" htmlType="submit" loading={uploading}>
                                 {editingNews ? 'Cập nhật' : 'Thêm mới'}
                             </Button>
                         </Space>
