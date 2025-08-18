@@ -14,7 +14,6 @@ export async function uploadImage(file: File): Promise<Models.File> {
             "unique()",
             file
         );
-        console.log("Uploaded:", res);
         return res;
     } catch (err: any) {
         console.error("Upload error:", err.message);

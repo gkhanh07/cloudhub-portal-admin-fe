@@ -9,9 +9,6 @@ const { Text } = Typography;
 
 const Header: React.FC = () => {
     const { user, isAuthenticated, logout, isLoading } = useAuth();
-
-    console.log('Header user:', user);
-
     if (isLoading) {
         return (
             <div style={{ padding: '16px', textAlign: 'center' }}>

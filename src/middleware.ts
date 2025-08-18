@@ -7,17 +7,11 @@ export function middleware(request: NextRequest) {
     if (url.pathname === '/login' || url.pathname.startsWith('/_next') || url.pathname.startsWith('/api')) {
         return NextResponse.next();
     }
-
     const accessToken = request.cookies.get('access_token')?.value;
-
-    console.log('Middleware - Path:', url.pathname, 'Token exists:', !!accessToken);
-
     if (!accessToken) {
-        console.log('No token found, redirecting to login');
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
-
     return NextResponse.next();
 }
 

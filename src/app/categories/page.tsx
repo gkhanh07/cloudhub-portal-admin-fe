@@ -2,14 +2,40 @@
 
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import dynamic from 'next/dynamic';
 import { categoryService, Category } from '../../service/categories';
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+
+// Quill editor configuration
+const quillModules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        ['link', 'image'],
+        [{ 'align': [] }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['clean']
+    ],
+};
+
+const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet', 'indent',
+    'link', 'image', 'align', 'color', 'background'
+];
 
 const CategoriesPage: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -38,6 +64,11 @@ const CategoriesPage: React.FC = () => {
         setEditingCategory(category);
         form.setFieldsValue(category);
         setIsModalVisible(true);
+    };
+
+    const showViewModal = (category: Category) => {
+        setViewingCategory(category);
+        setIsViewModalVisible(true);
     };
 
     const handleCancel = () => {
@@ -90,18 +121,47 @@ const CategoriesPage: React.FC = () => {
             title: 'Tên danh mục',
             dataIndex: 'name',
             key: 'name',
+            width: 200,
         },
         {
             title: 'Mô tả',
             dataIndex: 'description',
             key: 'description',
+            width: 300,
+            ellipsis: true,
+            render: (description: string) => {
+                // Strip HTML tags for table display
+                const stripHtml = (html: string) => {
+                    if (typeof window !== 'undefined') {
+                        const tmp = document.createElement('div');
+                        tmp.innerHTML = html || '';
+                        return tmp.textContent || tmp.innerText || '';
+                    }
+                    return html || '';
+                };
+
+                const textContent = stripHtml(description);
+                return (
+                    <div style={{ maxWidth: 300 }}>
+                        {textContent.length > 100 ? `${textContent.substring(0, 100)}...` : textContent}
+                    </div>
+                );
+            },
         },
         {
             title: 'Hành động',
             key: 'actions',
-            width: 150,
+            width: 180,
             render: (_: any, record: Category) => (
                 <Space>
+                    <Button
+                        type="default"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => showViewModal(record)}
+                    >
+                        Xem
+                    </Button>
                     <Button
                         type="primary"
                         size="small"
@@ -164,6 +224,7 @@ const CategoriesPage: React.FC = () => {
                 onCancel={handleCancel}
                 okText={editingCategory ? 'Cập nhật' : 'Tạo mới'}
                 cancelText="Hủy"
+                width={800}
             >
                 <Form
                     form={form}
@@ -185,12 +246,70 @@ const CategoriesPage: React.FC = () => {
                         label="Mô tả"
                         name="description"
                     >
-                        <Input.TextArea
-                            rows={3}
-                            placeholder="Nhập mô tả danh mục (không bắt buộc)"
+                        <ReactQuill
+                            modules={quillModules}
+                            formats={quillFormats}
+                            style={{ height: '150px', marginBottom: '50px' }}
+                            placeholder="Nhập mô tả danh mục (không bắt buộc)..."
                         />
                     </Form.Item>
                 </Form>
+            </Modal>
+
+            <Modal
+                title="Chi tiết danh mục"
+                open={isViewModalVisible}
+                onCancel={() => setIsViewModalVisible(false)}
+                footer={[
+                    <Button key="close" onClick={() => setIsViewModalVisible(false)}>
+                        Đóng
+                    </Button>
+                ]}
+                width={800}
+            >
+                {viewingCategory && (
+                    <div style={{ padding: '16px 0' }}>
+                        <div style={{ marginBottom: 24 }}>
+                            <h3 style={{ marginBottom: 8, color: '#1890ff' }}>Tên danh mục</h3>
+                            <p style={{ fontSize: 18, fontWeight: 500, marginBottom: 16 }}>
+                                {viewingCategory.name}
+                            </p>
+                        </div>
+
+                        <div style={{ marginBottom: 24 }}>
+                            <h3 style={{ marginBottom: 8, color: '#1890ff' }}>ID</h3>
+                            <p style={{ fontFamily: 'monospace', color: '#666', marginBottom: 16 }}>
+                                {viewingCategory._id}
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 style={{ marginBottom: 8, color: '#1890ff' }}>Mô tả</h3>
+                            <div style={{
+                                backgroundColor: '#fafafa',
+                                padding: 16,
+                                borderRadius: 6,
+                                border: '1px solid #d9d9d9',
+                                lineHeight: 1.8,
+                                fontSize: 14,
+                                minHeight: 100
+                            }}>
+                                {viewingCategory.description ? (
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: viewingCategory.description
+                                        }}
+                                        className="quill-content"
+                                    />
+                                ) : (
+                                    <p style={{ color: '#999', fontStyle: 'italic' }}>
+                                        Không có mô tả
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

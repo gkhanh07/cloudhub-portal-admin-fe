@@ -87,18 +87,13 @@ const ProductsPage = () => {
     };
 
     const handleSubmit = async (values: any) => {
-        console.log('Thông tin sản phẩm đăng lên:', values);
         try {
             if (editingProduct) {
-                console.log('Đang cập nhật sản phẩm với ID:', editingProduct._id);
                 const response = await productService.updateProduct(editingProduct._id, values);
-                console.log('Phản hồi cập nhật sản phẩm:', response);
                 setProducts(products.map(p => p._id === editingProduct._id ? response.data : p));
                 message.success('Cập nhật sản phẩm thành công');
             } else {
-                console.log('Đang tạo sản phẩm mới với thông tin:', values);
                 const response = await productService.createProduct(values);
-                console.log('Phản hồi tạo sản phẩm:', response);
                 setProducts([...products, response.data]);
                 message.success('Thêm sản phẩm thành công');
             }
