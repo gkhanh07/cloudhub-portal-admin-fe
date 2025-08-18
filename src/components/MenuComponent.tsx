@@ -24,7 +24,7 @@ const mucMenu = [
     { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm', path: '/products' },
     { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục', path: '/categories' },
     { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức', path: '/news' },
-    { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' }, // đặc biệt
+    { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' },
 ];
 
 const ThanhMenu: React.FC = () => {
