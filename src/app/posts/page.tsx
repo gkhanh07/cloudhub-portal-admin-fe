@@ -60,7 +60,7 @@ export default function QuanLyBaiViet() {
 
     const xoaBaiViet = async (id: string) => {
         try {
-            await deletePost(Number(id));
+            await deletePost(id);
             setBaiViet(baiViet.filter(p => String(p._id) !== id));
             message.success('Xóa bài viết thành công!');
         } catch {

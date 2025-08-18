@@ -78,7 +78,7 @@ export const updatePost = async (postData: UpdatePostRequest): Promise<Post> => 
 };
 
 // Delete post
-export const deletePost = async (id: number): Promise<void> => {
+export const deletePost = async (id: string): Promise<void> => {
     try {
         await apiClient.delete(`/posts/${id}`);
     } catch (error) {

@@ -9,6 +9,7 @@ export interface Product {
     os: string;
     bandwidth: string;
     price_per_month: number;
+    link?: string;
     category: {
         _id: string;
         name: string;
@@ -27,6 +28,7 @@ export interface CreateProductRequest {
     os: string;
     bandwidth: string;
     price_per_month: number;
+    link: string;
     category: string; // ObjectId as string
 }
 
@@ -40,6 +42,7 @@ export interface UpdateProductRequest {
     os?: string;
     bandwidth?: string;
     price_per_month?: number;
+    link?: string;
     category?: string;
 }
 

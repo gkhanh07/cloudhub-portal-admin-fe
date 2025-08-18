@@ -87,19 +87,25 @@ const ProductsPage = () => {
     };
 
     const handleSubmit = async (values: any) => {
+        console.log('Thông tin sản phẩm đăng lên:', values);
         try {
             if (editingProduct) {
+                console.log('Đang cập nhật sản phẩm với ID:', editingProduct._id);
                 const response = await productService.updateProduct(editingProduct._id, values);
+                console.log('Phản hồi cập nhật sản phẩm:', response);
                 setProducts(products.map(p => p._id === editingProduct._id ? response.data : p));
                 message.success('Cập nhật sản phẩm thành công');
             } else {
+                console.log('Đang tạo sản phẩm mới với thông tin:', values);
                 const response = await productService.createProduct(values);
+                console.log('Phản hồi tạo sản phẩm:', response);
                 setProducts([...products, response.data]);
                 message.success('Thêm sản phẩm thành công');
             }
             setModalVisible(false);
             form.resetFields();
-        } catch {
+        } catch (error) {
+            console.error('Lỗi khi lưu sản phẩm:', error);
             message.error('Lưu sản phẩm thất bại');
         }
     };
@@ -125,6 +131,17 @@ const ProductsPage = () => {
         { title: 'IP', dataIndex: 'ip', key: 'ip', width: 120 },
         { title: 'Hệ điều hành', dataIndex: 'os', key: 'os' },
         { title: 'Băng thông', dataIndex: 'bandwidth', key: 'bandwidth' },
+        {
+            title: 'Link',
+            dataIndex: 'link',
+            key: 'link',
+            width: 120,
+            render: (link: string) => link ? (
+                <a href={link} target="_blank" rel="noopener noreferrer">
+                    Xem chi tiết
+                </a>
+            ) : '-',
+        },
         {
             title: 'Giá / Tháng',
             dataIndex: 'price_per_month',
@@ -282,6 +299,8 @@ const ProductsPage = () => {
                                 />
                             </Form.Item>
                         </Col>
+
+
                     </Row>
 
                     <Row gutter={16}>
@@ -297,6 +316,16 @@ const ProductsPage = () => {
                             </Form.Item>
                         </Col>
                     </Row>
+
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Form.Item label="Link sản phẩm" name="link">
+                                <Input placeholder="https://example.com/product-detail" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+
 
                     <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
                         <Space>
