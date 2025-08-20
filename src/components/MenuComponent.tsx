@@ -10,6 +10,7 @@ import {
     UserOutlined,
     ToolOutlined,
     FileTextOutlined,
+    ContactsOutlined,
 } from '@ant-design/icons';
 import { Menu, Modal, Avatar, Typography, Divider } from 'antd';
 import Link from 'next/link';
@@ -22,11 +23,12 @@ const { Text } = Typography;
 // Map key menu → { label, icon, path }
 const mucMenu = [
     { key: 'trang-chu', icon: <HomeOutlined />, label: 'Trang chủ', path: '/' },
-    { key: 'home-text', icon: <FileTextOutlined />, label: 'Home Text', path: '/hometext' },
+    { key: 'home-text', icon: <FileTextOutlined />, label: 'Giới thiệu', path: '/hometext' },
     { key: 'bai-viet', icon: <EditOutlined />, label: 'Các dịch vụ cơ bản', path: '/posts' },
     { key: 'san-pham', icon: <ShoppingOutlined />, label: 'Sản phẩm', path: '/products' },
     { key: 'dich-vu', icon: <ToolOutlined />, label: 'Ưu điểm dịch vụ', path: '/services' },
     { key: 'danh-muc', icon: <TagsOutlined />, label: 'Danh mục', path: '/categories' },
+    { key: 'thong-tin-lien-he', icon: <ContactsOutlined />, label: 'Thông tin liên hệ', path: '/contact-info' },
     { key: 'tin-tuc', icon: <CalendarOutlined />, label: 'Tin tức', path: '/news' },
     { key: 'dang-xuat', icon: <LogoutOutlined />, label: 'Đăng xuất' },
 ];
