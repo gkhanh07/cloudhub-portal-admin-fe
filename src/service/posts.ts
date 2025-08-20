@@ -1,23 +1,6 @@
 import apiClient from '../config/axios';
+import { Post, CreatePostRequest, UpdatePostRequest } from '../interface/posts';
 
-export interface Post {
-    _id: number;
-    name: string;
-    content: string;
-    price: number;
-    createdAt?: string;
-    updatedAt?: string;
-}
-
-export interface CreatePostRequest {
-    name: string;
-    content: string;
-    price: number;
-}
-
-export interface UpdatePostRequest extends CreatePostRequest {
-    id: number;
-}
 
 // Get all posts
 export const getPosts = async (): Promise<Post[]> => {

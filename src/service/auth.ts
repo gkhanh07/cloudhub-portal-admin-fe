@@ -1,22 +1,8 @@
 import apiClient from '../config/axios';
 import Cookies from 'js-cookie';
+import { LoginRequest, LoginResponse } from '../interface/auth';
 
-export interface LoginRequest {
-    email: string;
-    password: string;
-}
 
-export interface LoginResponse {
-    data: {
-        accessToken: string;
-        refreshToken: string;
-    }
-    user: {
-        id: number;
-        name: string;
-        email: string;
-    };
-}
 
 export const authService = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {

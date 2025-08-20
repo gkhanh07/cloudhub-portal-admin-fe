@@ -5,7 +5,7 @@ import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'a
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import { homeTextService } from '../../service/homeText';
-import { HomeText } from '../../../interface/homeText';
+import { HomeText } from '../../interface/homeText';
 
 // Dynamically import ReactQuill to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });

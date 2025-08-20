@@ -18,7 +18,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, EyeOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import { serviceService } from '../../service/services';
-import { Service } from '../../../interface/service';
+import { Service } from '../../interface/service';
 import { uploadImage, getFileUrl } from '../../store/appwrite';
 
 // Dynamically import ReactQuill to avoid SSR issues

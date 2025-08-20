@@ -1,17 +1,7 @@
 import apiClient from "../config/axios";
-import { Service, CreateServiceRequest, UpdateServiceRequest } from "../../interface/service";
+import { Service, CreateServiceRequest, UpdateServiceRequest, ServicesResponse, ServiceResponse } from "../interface/service";
 
-export interface ServicesResponse {
-    success: boolean;
-    data: Service[];
-    message?: string;
-}
 
-export interface ServiceResponse {
-    success: boolean;
-    data: Service;
-    message?: string;
-}
 
 export const serviceService = {
     // Public routes - no authentication required

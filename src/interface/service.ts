@@ -18,3 +18,14 @@ export interface UpdateServiceRequest {
     description?: string;
     imageUrl?: string;
 }
+export interface ServicesResponse {
+    success: boolean;
+    data: Service[];
+    message?: string;
+}
+
+export interface ServiceResponse {
+    success: boolean;
+    data: Service;
+    message?: string;
+}

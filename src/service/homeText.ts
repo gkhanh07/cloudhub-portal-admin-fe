@@ -5,7 +5,7 @@ import {
     UpdateHomeTextRequest,
     HomeTextResponse,
     HomeTextsResponse
-} from "../../interface/homeText";
+} from "../interface/homeText";
 
 export const homeTextService = {
     // Public routes - no authentication required

@@ -1,34 +1,6 @@
 import apiClient from "../config/axios";
+import { Category, CreateCategoryRequest, UpdateCategoryRequest, CategoriesResponse, CategoryResponse } from "../interface/categories";
 
-export interface Category {
-    _id: string;
-    name: string;
-    description?: string;
-    createdAt?: string;
-    updatedAt?: string;
-}
-
-export interface CreateCategoryRequest {
-    name: string;
-    description?: string;
-}
-
-export interface UpdateCategoryRequest {
-    name?: string;
-    description?: string;
-}
-
-export interface CategoriesResponse {
-    success: boolean;
-    data: Category[];
-    message?: string;
-}
-
-export interface CategoryResponse {
-    success: boolean;
-    data: Category;
-    message?: string;
-}
 
 export const categoryService = {
     // Public routes - no authentication required

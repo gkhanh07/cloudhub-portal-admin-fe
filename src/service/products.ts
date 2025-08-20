@@ -5,7 +5,7 @@ import {
     UpdateProductRequest,
     ProductsResponse,
     ProductResponse
-} from "../../interface/product";
+} from "../interface/product";
 
 export const productService = {
     getAllProducts: async (): Promise<ProductsResponse> => {

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
-import { contactService, ContactInfo } from '../../service/contact-info';
+import { contactService } from '../../service/contact-info';
+import { ContactInfo } from '../../interface/contact-info';
 
 // Dynamically import ReactQuill to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });

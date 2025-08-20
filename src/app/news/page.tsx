@@ -19,8 +19,9 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
-import { newsService, News } from '../../service/news';
+import { newsService } from '../../service/news';
 import { uploadImage, getFileUrl } from '../../store/appwrite';
+import { News } from '../../interface/news';
 
 // Dynamically import ReactQuill to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });

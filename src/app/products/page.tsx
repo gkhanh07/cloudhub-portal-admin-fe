@@ -17,9 +17,9 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { productService } from '../../service/products';
-import { Product } from '../../../interface/product';
+import { Product } from '../../interface/product';
 import { categoryService, Category as CategoryType } from '../../service/categories';
-import { Category } from '../../../interface/categories';
+import { Category } from '../../interface/categories';
 
 const ProductsPage = () => {
     const [products, setProducts] = useState<Product[]>([]);
